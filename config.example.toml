@@ -1,0 +1,47 @@
+# DIS Radio Monitor — example configuration
+# Copy to config.toml (or let the app create it on first run).
+
+[network]
+multicast_group = "239.255.0.1"
+port = 3000
+interface = ""          # leave blank to use the system default interface
+# exercise_id = 1       # uncomment to filter to a specific DIS exercise (1–255)
+
+[audio]
+# output_device = "My Speakers"   # leave absent to use the system default output
+
+[display]
+stale_timeout_seconds = 30   # tile dims after this many seconds; removed at 2×
+
+[transmit]
+site_id = 1
+app_id  = 1
+entity_id = 1
+primary_radio_id   = 1
+secondary_radio_id = 2
+ptt_key_primary   = "Space"         # Qt key name, e.g. Space, F1, Shift+Space
+ptt_key_secondary = ""              # leave empty to disable secondary PTT
+# input_device = "My Microphone"   # leave absent to use the system default input
+
+# SISO-REF-010 Radio Entity Type fields
+entity_type_domain     = 0   # 0=Other 1=Land 2=Air 3=Surface 4=Subsurface 5=Space
+entity_type_country    = 0   # SISO-REF-010 UID 29 country code
+entity_type_category   = 1
+entity_type_subcategory = 0
+entity_type_specific   = 0
+entity_type_extra      = 0
+
+[local_transmitters]
+starting_radio_id = 1   # radio ID assigned to the first new local transmitter
+
+# Define persistent local transmitters here, or add them from the GUI.
+# Modulation presets: "No Statement", "NBFM (12.5 kHz)", "NBFM (25 kHz)",
+#   "WFM (200 kHz)", "AM (DSB)", "AM (SSB)", "Unmodulated", "Pulse", "CPSM"
+#
+# [[local_transmitters.radios]]
+# name          = "Command Net"
+# frequency_hz  = 30000000.0
+# modulation_major = "NBFM (25 kHz)"
+# bandwidth_hz  = 25000.0
+# power_dbm     = 10.0
+# radio_id      = 1        # managed by the app; do not edit manually
