@@ -1,29 +1,35 @@
 from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import Optional
 
 from PyQt6.QtCore import QRect, QSize, Qt, QTimer
-from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtGui import QCloseEvent, QKeyEvent
 from PyQt6.QtWidgets import (
-    QLabel, QLayout,
-    QLayoutItem, QLineEdit, QMainWindow, QPushButton,
-    QScrollArea, QStatusBar, QToolBar,
+    QLabel,
+    QLayout,
+    QLayoutItem,
+    QLineEdit,
+    QMainWindow,
+    QPushButton,
+    QScrollArea,
+    QStatusBar,
+    QToolBar,
     QWidget,
 )
 
 from dis_radio.audio.player import AudioPlayer
-from dis_radio.config import AppConfig, save as save_config
+from dis_radio.config import AppConfig
+from dis_radio.config import save as save_config
+from dis_radio.dis.modulation import channel_modulation_key
 from dis_radio.gui.local_transmitter_dialog import LocalTransmitterDialog
 from dis_radio.gui.settings_dialog import SettingsDialog
 from dis_radio.gui.transmitter_tile import TransmitterTile
 from dis_radio.local_transmitter_manager import LocalTransmitterManager
-from dis_radio.models import LocalTransmitter, TransmitterKey, TransmitterRecord
-from dis_radio.dis.modulation import channel_modulation_key
+from dis_radio.models import TransmitterKey, TransmitterRecord
 from dis_radio.network.listener import DISListener
 from dis_radio.network.sender import DISSender
 from dis_radio.ptt_controller import PTTController
-
 
 log = logging.getLogger(__name__)
 
@@ -35,22 +41,25 @@ log = logging.getLogger(__name__)
 class QFlowLayout(QLayout):
     """Arranges child widgets in left-to-right rows, wrapping as needed."""
 
-    def __init__(self, parent: Optional[QWidget] = None, h_spacing: int = 8, v_spacing: int = 8) -> None:
+    def __init__(
+        self, parent: QWidget | None = None, h_spacing: int = 8, v_spacing: int = 8
+    ) -> None:
         super().__init__(parent)
         self._items: list[QLayoutItem] = []
         self._h_spacing = h_spacing
         self._v_spacing = v_spacing
 
-    def addItem(self, item: QLayoutItem) -> None:  # noqa: N802
-        self._items.append(item)
+    def addItem(self, item: QLayoutItem | None) -> None:  # noqa: N802
+        if item is not None:
+            self._items.append(item)
 
     def count(self) -> int:
         return len(self._items)
 
-    def itemAt(self, index: int) -> Optional[QLayoutItem]:  # noqa: N802
+    def itemAt(self, index: int) -> QLayoutItem | None:  # noqa: N802
         return self._items[index] if 0 <= index < len(self._items) else None
 
-    def takeAt(self, index: int) -> Optional[QLayoutItem]:  # noqa: N802
+    def takeAt(self, index: int) -> QLayoutItem | None:  # noqa: N802
         return self._items.pop(index) if 0 <= index < len(self._items) else None
 
     def hasHeightForWidth(self) -> bool:  # noqa: N802
@@ -77,7 +86,9 @@ class QFlowLayout(QLayout):
         )
         return size
 
-    def removeWidget(self, widget: QWidget) -> None:  # noqa: N802
+    def removeWidget(self, widget: QWidget | None) -> None:  # noqa: N802
+        if widget is None:
+            return
         for i, item in enumerate(self._items):
             if item.widget() is widget:
                 self.takeAt(i)
@@ -128,9 +139,9 @@ class MainWindow(QMainWindow):
         self._config = config
         self._tiles: dict[TransmitterKey, TransmitterTile] = {}
         self._records: dict[TransmitterKey, TransmitterRecord] = {}
-        self._primary_tx_tile: Optional[TransmitterTile] = None
-        self._secondary_tx_tile: Optional[TransmitterTile] = None
-        self._active_ptt_tile: Optional[TransmitterTile] = None
+        self._primary_tx_tile: TransmitterTile | None = None
+        self._secondary_tx_tile: TransmitterTile | None = None
+        self._active_ptt_tile: TransmitterTile | None = None
 
         # Channel consolidation index
         self._channel_index: dict[tuple[float, str], TransmitterKey] = {}
@@ -255,7 +266,8 @@ class MainWindow(QMainWindow):
 
     def _on_transmitter_updated(self, record: TransmitterRecord) -> None:
         if not record.is_local:
-            # Ignore PDUs echoed back from our own entity — managed via LocalTransmitterManager
+            # Ignore PDUs echoed back from our own entity —
+            # managed via LocalTransmitterManager
             site, app, entity = record.entity_id
             if (site == self._config.transmit.site_id
                     and app == self._config.transmit.app_id
@@ -270,7 +282,9 @@ class MainWindow(QMainWindow):
             old_channel = next(
                 (ch for ch, k in self._channel_index.items() if k == key), None
             )
-            new_channel = (record.frequency_hz, channel_modulation_key(record.modulation_major))
+            new_channel = (
+                record.frequency_hz, channel_modulation_key(record.modulation_major)
+            )
             if old_channel and old_channel != new_channel:
                 del self._channel_index[old_channel]
             self._channel_index[new_channel] = key
@@ -303,7 +317,9 @@ class MainWindow(QMainWindow):
             else:
                 self._tiles[key].update_record(record)
         else:
-            channel_key_tuple = (record.frequency_hz, channel_modulation_key(record.modulation_major))
+            channel_key_tuple = (
+                record.frequency_hz, channel_modulation_key(record.modulation_major)
+            )
             canonical_key = self._channel_index.get(channel_key_tuple)
             if canonical_key is not None:
                 # Route to canonical local tile as guest
@@ -312,9 +328,9 @@ class MainWindow(QMainWindow):
                 guest_records = [
                     self._records[gk] for gk in guests if gk in self._records
                 ]
-                tile = self._tiles.get(canonical_key)
-                if tile:
-                    tile.set_guests(guest_records)
+                existing_tile = self._tiles.get(canonical_key)
+                if existing_tile:
+                    existing_tile.set_guests(guest_records)
             else:
                 # Observed radio with no local match — existing behaviour
                 if key not in self._tiles:
@@ -325,8 +341,7 @@ class MainWindow(QMainWindow):
                 else:
                     self._tiles[key].update_record(record)
 
-    def _on_local_removed(self, key: object) -> None:
-        key = key  # type: TransmitterKey
+    def _on_local_removed(self, key: TransmitterKey) -> None:
         # Remove channel index entry
         old_channel = next(
             (ch for ch, k in self._channel_index.items() if k == key), None
@@ -351,7 +366,7 @@ class MainWindow(QMainWindow):
                 self._records.pop(gk, None)  # drop; will re-appear on next PDU
 
         # Remove the local tile
-        tile = self._tiles.pop(key, None)
+        tile = self._tiles.pop(key, None)  # type: ignore[arg-type]
         self._records.pop(key, None)
         if tile:
             if tile is self._primary_tx_tile:
@@ -367,19 +382,19 @@ class MainWindow(QMainWindow):
     def _on_signal_received(
         self, key: object, audio: bytes, encoding: int, sample_rate: int
     ) -> None:
-        tile = self._tiles.get(key)  # type: ignore[arg-type]
+        tile = self._tiles.get(key)  # type: ignore[call-overload]
         play_key = key
         if tile is None:
             # Key may be a guest of a local tile — find its canonical key so
             # audio is routed through the local tile's stream (which is
             # indexed by the canonical key in AudioPlayer).
             for canonical_key, guests in self._channel_guests.items():
-                if key in guests:  # type: ignore[operator]
+                if key in guests:
                     tile = self._tiles.get(canonical_key)
                     play_key = canonical_key
                     break
         if tile is not None and tile.audio_enabled:
-            self._player.feed(play_key, audio, encoding, sample_rate)  # type: ignore[arg-type]
+            self._player.feed(play_key, audio, encoding, sample_rate)  # type: ignore[arg-type]  # play_key: object from pyqtSignal
 
     def _toggle_audio(self, key: TransmitterKey, enabled: bool) -> None:
         if enabled:
@@ -407,7 +422,9 @@ class MainWindow(QMainWindow):
                 for gk in stale_guests:
                     guests.discard(gk)
                     self._records.pop(gk, None)
-                guest_records = [self._records[gk] for gk in guests if gk in self._records]
+                guest_records = [
+                    self._records[gk] for gk in guests if gk in self._records
+                ]
                 tile.set_guests(guest_records)
             else:
                 age = (now - tile.last_seen).total_seconds()
@@ -481,23 +498,31 @@ class MainWindow(QMainWindow):
     def _on_delete_local(self, key: TransmitterKey) -> None:
         self._local_manager.remove(key[3])
 
-    def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802
-        if event.isAutoRepeat():
+    def keyPressEvent(self, event: QKeyEvent | None) -> None:  # noqa: N802
+        if event is None or event.isAutoRepeat():
             return
         role = None
         if self._ptt_key_primary:
             modifiers, key = self._ptt_key_primary
-            if event.key() == key and (event.modifiers() & MainWindow._RELEVANT_MODIFIERS) == modifiers:
+            if (
+                event.key() == key
+                and (event.modifiers() & MainWindow._RELEVANT_MODIFIERS) == modifiers
+            ):
                 role = "primary"
         if role is None and self._ptt_key_secondary:
             modifiers, key = self._ptt_key_secondary
-            if event.key() == key and (event.modifiers() & MainWindow._RELEVANT_MODIFIERS) == modifiers:
+            if (
+                event.key() == key
+                and (event.modifiers() & MainWindow._RELEVANT_MODIFIERS) == modifiers
+            ):
                 role = "secondary"
 
         if role is not None:
             self._ptt.ptt_press(role)
             # Suppress local manager PDU while we are transmitting on a local tile
-            active_tile = self._primary_tx_tile if role == "primary" else self._secondary_tx_tile
+            active_tile = (
+                self._primary_tx_tile if role == "primary" else self._secondary_tx_tile
+            )
             if active_tile is not None:
                 active_key = next(
                     (k for k, t in self._tiles.items() if t is active_tile), None
@@ -507,23 +532,31 @@ class MainWindow(QMainWindow):
         else:
             super().keyPressEvent(event)
 
-    def keyReleaseEvent(self, event: QKeyEvent) -> None:  # noqa: N802
-        if event.isAutoRepeat():
+    def keyReleaseEvent(self, event: QKeyEvent | None) -> None:  # noqa: N802
+        if event is None or event.isAutoRepeat():
             return
         role = None
         if self._ptt_key_primary:
             modifiers, key = self._ptt_key_primary
-            if event.key() == key and (event.modifiers() & MainWindow._RELEVANT_MODIFIERS) == modifiers:
+            if (
+                event.key() == key
+                and (event.modifiers() & MainWindow._RELEVANT_MODIFIERS) == modifiers
+            ):
                 role = "primary"
         if role is None and self._ptt_key_secondary:
             modifiers, key = self._ptt_key_secondary
-            if event.key() == key and (event.modifiers() & MainWindow._RELEVANT_MODIFIERS) == modifiers:
+            if (
+                event.key() == key
+                and (event.modifiers() & MainWindow._RELEVANT_MODIFIERS) == modifiers
+            ):
                 role = "secondary"
 
         if role is not None:
             self._ptt.ptt_release(role)
             # Resume local manager PDU after PTT release
-            active_tile = self._primary_tx_tile if role == "primary" else self._secondary_tx_tile
+            active_tile = (
+                self._primary_tx_tile if role == "primary" else self._secondary_tx_tile
+            )
             if active_tile is not None:
                 active_key = next(
                     (k for k, t in self._tiles.items() if t is active_tile), None
@@ -539,7 +572,9 @@ class MainWindow(QMainWindow):
                 "color: white; background: #E74C3C; font-size: 12px; "
                 "padding: 2px 6px; border-radius: 4px;"
             )
-            tile = self._primary_tx_tile if role == "primary" else self._secondary_tx_tile
+            tile = (
+                self._primary_tx_tile if role == "primary" else self._secondary_tx_tile
+            )
             if tile is not None:
                 tile.set_local_tx(True)
             self._active_ptt_tile = tile
@@ -552,7 +587,9 @@ class MainWindow(QMainWindow):
                 self._active_ptt_tile = None
 
     def _on_ptt_error(self, message: str) -> None:
-        self.statusBar().showMessage(message, 5000)
+        bar = self.statusBar()
+        if bar is not None:
+            bar.showMessage(message, 5000)
 
     def _on_tx_primary_toggled(
         self, key: TransmitterKey, tile: TransmitterTile, enabled: bool
@@ -574,7 +611,10 @@ class MainWindow(QMainWindow):
         self, key: TransmitterKey, tile: TransmitterTile, enabled: bool
     ) -> None:
         if enabled:
-            if self._secondary_tx_tile is not None and self._secondary_tx_tile is not tile:
+            if (
+                self._secondary_tx_tile is not None
+                and self._secondary_tx_tile is not tile
+            ):
                 self._secondary_tx_tile.set_tx_secondary(False)
                 self._ptt.deselect("secondary")
             self._secondary_tx_tile = tile
@@ -590,7 +630,9 @@ class MainWindow(QMainWindow):
     # Helpers                                                              #
     # ------------------------------------------------------------------ #
 
-    def _wire_tile(self, tile: TransmitterTile, key: TransmitterKey, *, is_local: bool) -> None:
+    def _wire_tile(
+        self, tile: TransmitterTile, key: TransmitterKey, *, is_local: bool
+    ) -> None:
         tile.play_toggled.connect(
             lambda enabled, k=key: self._toggle_audio(k, enabled)
         )
@@ -624,12 +666,14 @@ class MainWindow(QMainWindow):
             pass
         exercise_text = self._exercise_edit.text().strip()
         self._config.network.exercise_id = (
-            int(exercise_text) if exercise_text.isdigit() and int(exercise_text) > 0 else None
+            int(exercise_text)
+            if exercise_text.isdigit() and int(exercise_text) > 0
+            else None
         )
         save_config(self._config)
 
     @staticmethod
-    def _resolve_key(key_name: str) -> Optional[tuple[Qt.KeyboardModifier, Qt.Key]]:
+    def _resolve_key(key_name: str) -> tuple[Qt.KeyboardModifier, Qt.Key] | None:
         if not key_name:
             return None
         parts = key_name.split("+")
@@ -652,7 +696,7 @@ class MainWindow(QMainWindow):
             return None
         return combined, key
 
-    def closeEvent(self, event) -> None:  # noqa: ANN001, N802
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
         self._listener.stop()
         self._listener.wait(2000)
         self._local_manager.stop()

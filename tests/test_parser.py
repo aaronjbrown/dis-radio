@@ -1,7 +1,9 @@
 import struct
+
 import pytest
+
+from dis_radio.dis.parser import ParsedKind, parse_pdu
 from dis_radio.models import TransmitterState
-from dis_radio.dis.parser import parse_pdu, ParsedKind
 
 
 def _make_transmitter_pdu(
@@ -10,7 +12,8 @@ def _make_transmitter_pdu(
     frequency=148_500_000, power=10.0,
     major_mod=3,
 ) -> bytes:
-    """Build raw TransmitterPdu bytes (DIS 7, pduType=25) without using opendis serialize."""
+    """Build raw TransmitterPdu bytes (DIS 7, pduType=25)
+    without using opendis serialize."""
     # Fixed payload size (no variable-length lists)
     # Header(12) + EntityID(6) + radioNumber(2) + radioEntityType(8)
     # + transmitState(1) + inputSource(1) + varTxParamCount(2)
@@ -28,8 +31,8 @@ def _make_transmitter_pdu(
     buf += struct.pack('>BB', state, 0)              # transmitState, inputSource
     buf += struct.pack('>H', 0)                      # variableTransmitterParameterCount
     buf += struct.pack('>ddd', 0.0, 0.0, 0.0)        # antennaLocation (Vector3Double)
-    buf += struct.pack('>fff', 0.0, 0.0, 0.0)        # relativeAntennaLocation (Vector3Float)
-    buf += struct.pack('>HH', 0, 0)                  # antennaPatternType, antennaPatternCount
+    buf += struct.pack('>fff', 0.0, 0.0, 0.0)        # relativeAntennaLocation
+    buf += struct.pack('>HH', 0, 0)    # antennaPatternType, antennaPatternCount
     buf += struct.pack('>q', frequency)              # frequency (int64)
     buf += struct.pack('>f', 0.0)                    # transmitFrequencyBandwidth
     buf += struct.pack('>f', power)                  # power

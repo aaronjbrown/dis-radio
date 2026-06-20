@@ -1,8 +1,8 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum
-from typing import Optional
 
 TransmitterKey = tuple[int, int, int, int]  # site, application, entity, radio_id
 
@@ -35,7 +35,7 @@ class TransmitterRecord:
     last_seen: datetime
     audio_enabled: bool = False
     is_local: bool = False
-    name: Optional[str] = None  # set for local transmitters; None for observed
+    name: str | None = None  # set for local transmitters; None for observed
     bandwidth_hz: float = 0.0
 
     @property

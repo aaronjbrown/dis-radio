@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 import socket
 import struct
@@ -36,7 +37,9 @@ class _SocketWrapper:
     """
 
     def __init__(self, interface: str = "") -> None:
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self._sock = socket.socket(
+            socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP
+        )
         self._sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 1)
         if interface:
             self._sock.setsockopt(
@@ -60,7 +63,8 @@ class DISSender:
         self._entity_type = _extract_entity_type(config)
 
     def reconfigure(self, config: AppConfig) -> None:
-        """Update target multicast group, port, and entity type without recreating the socket."""
+        """Update target multicast group, port, and entity type
+        without recreating the socket."""
         self._group = config.network.multicast_group
         self._port = config.network.port
         self._entity_type = _extract_entity_type(config)
@@ -76,7 +80,8 @@ class DISSender:
         bandwidth_hz: float = 0.0,
     ) -> None:
         self._send(self._build_transmitter_pdu(
-            key, frequency_hz, state, exercise_id, modulation_major, power_dbm, bandwidth_hz,
+            key, frequency_hz, state, exercise_id,
+            modulation_major, power_dbm, bandwidth_hz,
         ))
 
     def send_signal(
@@ -108,7 +113,9 @@ class DISSender:
         bandwidth_hz: float = 0.0,
     ) -> bytes:
         site, app, entity, radio_id = key
-        ss, major, detail, system, _ = PRESETS.get(modulation_major, PRESETS["No Statement"])
+        ss, major, detail, system, _ = PRESETS.get(
+            modulation_major, PRESETS["No Statement"]
+        )
         domain, country, category, subcategory, specific, extra = self._entity_type
         buf = struct.pack(
             '>BBBBIHBB',
@@ -117,8 +124,10 @@ class DISSender:
         )
         buf += struct.pack('>HHH', site, app, entity)
         buf += struct.pack('>H', radio_id)
-        buf += struct.pack('>BBHBBBB',
-                           _ENTITY_KIND_RADIO, domain, country, category, subcategory, specific, extra)
+        buf += struct.pack(
+            '>BBHBBBB',
+            _ENTITY_KIND_RADIO, domain, country, category, subcategory, specific, extra,
+        )
         buf += struct.pack('>BB', int(state), 0)
         buf += struct.pack('>H', 0)
         buf += struct.pack('>ddd', 0.0, 0.0, 0.0)

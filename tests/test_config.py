@@ -1,6 +1,11 @@
 import tempfile
 from pathlib import Path
-from dis_radio.config import AppConfig, load, save, TransmitConfig, LocalTransmitterConfig
+
+from dis_radio.config import (
+    AppConfig,
+    load,
+    save,
+)
 from dis_radio.models import LocalTransmitter
 
 
@@ -202,10 +207,10 @@ def test_local_transmitter_bandwidth_hz_missing_from_file_loads_as_zero():
         path = Path(tmp) / "config.toml"
         # Write a config without bandwidth_hz — simulates old config files
         path.write_text(
-            "[network]\nmulticast_group = \"239.255.0.1\"\nport = 3000\ninterface = \"\"\n"
+            "[network]\nmulticast_group = \"239.255.0.1\"\nport = 3000\ninterface = \"\"\n"  # noqa: E501
             "[audio]\n[display]\nstale_timeout_seconds = 30\n[transmit]\n"
             "site_id = 1\napp_id = 1\nentity_id = 1\nprimary_radio_id = 1\n"
-            "secondary_radio_id = 2\nptt_key_primary = \"Space\"\nptt_key_secondary = \"\"\n"
+            "secondary_radio_id = 2\nptt_key_primary = \"Space\"\nptt_key_secondary = \"\"\n"  # noqa: E501
             "[local_transmitters]\nstarting_radio_id = 1\n"
             "[[local_transmitters.radios]]\nname = \"R1\"\nfrequency_hz = 148500000.0\n"
             "modulation_major = \"NBFM (25 kHz)\"\npower_dbm = 10.0\nradio_id = 1\n"
@@ -218,7 +223,7 @@ def test_load_missing_local_transmitters_section_uses_defaults():
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "config.toml"
         # Write a config without [local_transmitters]
-        path.write_text("[network]\nmulticast_group = \"239.255.0.1\"\nport = 3000\ninterface = \"\"\n")
+        path.write_text("[network]\nmulticast_group = \"239.255.0.1\"\nport = 3000\ninterface = \"\"\n")  # noqa: E501
         loaded = load(path)
         assert loaded.local_transmitters.starting_radio_id == 1
         assert loaded.local_transmitters.transmitters == []

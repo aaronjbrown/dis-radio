@@ -1,7 +1,9 @@
 from datetime import datetime
 from unittest.mock import MagicMock
+
 import pytest
 from PyQt6.QtWidgets import QApplication
+
 from dis_radio.config import AppConfig
 from dis_radio.models import TransmitterRecord, TransmitterState
 from dis_radio.ptt_controller import PTTController
@@ -167,7 +169,7 @@ def test_audio_chunk_sent_as_signal_pdu(qapp):
 
     mock_sender.send_signal.assert_called_once()
     args = mock_sender.send_signal.call_args[0]
-    assert args[0] == controller._our_key("primary")  # transmit on our own key, not remote
+    assert args[0] == controller._our_key("primary")  # our key, not the remote key
     assert args[1] == audio_data  # audio bytes passed through
 
 
@@ -196,14 +198,18 @@ def test_select_stores_modulation(qapp):
 
 def test_select_stores_power_and_bandwidth(qapp):
     controller, _, _, _ = _make_controller(qapp)
-    controller.select((1, 2, 3, 4), _make_record(power_dbm=37.0, bandwidth_hz=25_000.0), "primary")
+    controller.select(
+        (1, 2, 3, 4), _make_record(power_dbm=37.0, bandwidth_hz=25_000.0), "primary"
+    )
     assert controller._primary_power_dbm == 37.0
     assert controller._primary_bandwidth_hz == 25_000.0
 
 
 def test_deselect_clears_power_and_bandwidth(qapp):
     controller, _, _, _ = _make_controller(qapp)
-    controller.select((1, 2, 3, 4), _make_record(power_dbm=37.0, bandwidth_hz=25_000.0), "primary")
+    controller.select(
+        (1, 2, 3, 4), _make_record(power_dbm=37.0, bandwidth_hz=25_000.0), "primary"
+    )
     controller.deselect("primary")
     assert controller._primary_power_dbm == 0.0
     assert controller._primary_bandwidth_hz == 0.0
@@ -211,7 +217,9 @@ def test_deselect_clears_power_and_bandwidth(qapp):
 
 def test_ptt_press_sends_power_and_bandwidth(qapp):
     controller, mock_sender, _, _ = _make_controller(qapp)
-    controller.select((1, 2, 3, 4), _make_record(power_dbm=37.0, bandwidth_hz=25_000.0), "primary")
+    controller.select(
+        (1, 2, 3, 4), _make_record(power_dbm=37.0, bandwidth_hz=25_000.0), "primary"
+    )
     controller.ptt_press("primary")
     kwargs = mock_sender.send_transmitter.call_args[1]
     assert kwargs.get("power_dbm") == 37.0

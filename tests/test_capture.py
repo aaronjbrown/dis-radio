@@ -1,6 +1,8 @@
+from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
-from unittest.mock import MagicMock
+
 from dis_radio.audio.capture import AudioCapture
 
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
+
 import logging
-from typing import Optional
 
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 
@@ -17,7 +17,8 @@ _SAMPLE_RATE = 8000
 
 
 class PTTController(QObject):
-    ptt_active = pyqtSignal(str)  # role ("primary"/"secondary") when active, "" when inactive
+    # Emits the active role ("primary"/"secondary"), or "" when inactive
+    ptt_active = pyqtSignal(str)
     ptt_error = pyqtSignal(str)
 
     def __init__(
@@ -26,8 +27,8 @@ class PTTController(QObject):
         sender: DISSender,
         player: AudioPlayer,
         *,
-        _capture: Optional[AudioCapture] = None,
-        parent: Optional[QObject] = None,
+        _capture: AudioCapture | None = None,
+        parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
         self._config = config
@@ -35,17 +36,17 @@ class PTTController(QObject):
         self._player = player
         self._capture = _capture or AudioCapture(config.transmit.input_device)
 
-        self._primary_key: Optional[TransmitterKey] = None
+        self._primary_key: TransmitterKey | None = None
         self._primary_freq: float = 0.0
         self._primary_mod: str = "No Statement"
-        self._secondary_key: Optional[TransmitterKey] = None
+        self._secondary_key: TransmitterKey | None = None
         self._secondary_freq: float = 0.0
         self._secondary_mod: str = "No Statement"
         self._primary_power_dbm: float = 0.0
         self._secondary_power_dbm: float = 0.0
         self._primary_bandwidth_hz: float = 0.0
         self._secondary_bandwidth_hz: float = 0.0
-        self._active_role: Optional[str] = None
+        self._active_role: str | None = None
 
         self._heartbeat = QTimer(self)
         self._heartbeat.setInterval(_HEARTBEAT_INTERVAL_MS)
@@ -94,8 +95,14 @@ class PTTController(QObject):
 
         freq = self._primary_freq if role == "primary" else self._secondary_freq
         mod = self._primary_mod if role == "primary" else self._secondary_mod
-        power = self._primary_power_dbm if role == "primary" else self._secondary_power_dbm
-        bw = self._primary_bandwidth_hz if role == "primary" else self._secondary_bandwidth_hz
+        power = (
+            self._primary_power_dbm if role == "primary" else self._secondary_power_dbm
+        )
+        bw = (
+            self._primary_bandwidth_hz
+            if role == "primary"
+            else self._secondary_bandwidth_hz
+        )
         our_key = self._our_key(role)
         exercise_id = self._config.network.exercise_id or 1
 
@@ -107,8 +114,10 @@ class PTTController(QObject):
             self.ptt_error.emit("Failed to open microphone")
             return
 
-        self._sender.send_transmitter(our_key, freq, TransmitterState.TRANSMITTING, exercise_id,
-                                      modulation_major=mod, power_dbm=power, bandwidth_hz=bw)
+        self._sender.send_transmitter(
+            our_key, freq, TransmitterState.TRANSMITTING, exercise_id,
+            modulation_major=mod, power_dbm=power, bandwidth_hz=bw,
+        )
         self._player.mute_for_tx(key)
         self._active_role = role
         self.ptt_active.emit(role)
@@ -124,7 +133,7 @@ class PTTController(QObject):
     def stop_heartbeat(self) -> None:
         self._heartbeat.stop()
 
-    def reconfigure(self, config: AppConfig, player: Optional[AudioPlayer] = None) -> None:
+    def reconfigure(self, config: AppConfig, player: AudioPlayer | None = None) -> None:
         """Update config and optionally swap the AudioPlayer reference."""
         if self._active_role is not None:
             self._stop_ptt(self._active_role)
@@ -161,15 +170,23 @@ class PTTController(QObject):
         key = self._primary_key if role == "primary" else self._secondary_key
         freq = self._primary_freq if role == "primary" else self._secondary_freq
         mod = self._primary_mod if role == "primary" else self._secondary_mod
-        power = self._primary_power_dbm if role == "primary" else self._secondary_power_dbm
-        bw = self._primary_bandwidth_hz if role == "primary" else self._secondary_bandwidth_hz
+        power = (
+            self._primary_power_dbm if role == "primary" else self._secondary_power_dbm
+        )
+        bw = (
+            self._primary_bandwidth_hz
+            if role == "primary"
+            else self._secondary_bandwidth_hz
+        )
         our_key = self._our_key(role)
         exercise_id = self._config.network.exercise_id or 1
 
         self._capture.stop()
         if key is not None:
-            self._sender.send_transmitter(our_key, freq, TransmitterState.IDLE, exercise_id,
-                                          modulation_major=mod, power_dbm=power, bandwidth_hz=bw)
+            self._sender.send_transmitter(
+                our_key, freq, TransmitterState.IDLE, exercise_id,
+                modulation_major=mod, power_dbm=power, bandwidth_hz=bw,
+            )
             self._player.unmute_for_tx(key)
         self._active_role = None
         self.ptt_active.emit("")
@@ -177,10 +194,16 @@ class PTTController(QObject):
     def _send_heartbeat(self) -> None:
         exercise_id = self._config.network.exercise_id or 1
         for role, key, freq, mod, power, bw in [
-            ("primary",   self._primary_key,   self._primary_freq,   self._primary_mod,
-             self._primary_power_dbm,   self._primary_bandwidth_hz),
-            ("secondary", self._secondary_key, self._secondary_freq, self._secondary_mod,
-             self._secondary_power_dbm, self._secondary_bandwidth_hz),
+            (
+                "primary", self._primary_key,
+                self._primary_freq, self._primary_mod,
+                self._primary_power_dbm, self._primary_bandwidth_hz,
+            ),
+            (
+                "secondary", self._secondary_key,
+                self._secondary_freq, self._secondary_mod,
+                self._secondary_power_dbm, self._secondary_bandwidth_hz,
+            ),
         ]:
             if key is None:
                 continue
@@ -189,5 +212,7 @@ class PTTController(QObject):
                 if self._active_role == role
                 else TransmitterState.IDLE
             )
-            self._sender.send_transmitter(self._our_key(role), freq, state, exercise_id,
-                                          modulation_major=mod, power_dbm=power, bandwidth_hz=bw)
+            self._sender.send_transmitter(
+                self._our_key(role), freq, state, exercise_id,
+                modulation_major=mod, power_dbm=power, bandwidth_hz=bw,
+            )

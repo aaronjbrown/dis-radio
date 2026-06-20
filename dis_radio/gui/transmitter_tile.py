@@ -1,11 +1,16 @@
 from __future__ import annotations
+
 from datetime import datetime
-from typing import Optional
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QFrame, QGraphicsOpacityEffect, QHBoxLayout,
-    QLabel, QPushButton, QVBoxLayout, QWidget,
+    QFrame,
+    QGraphicsOpacityEffect,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
 
 from dis_radio.models import TransmitterRecord, TransmitterState
@@ -50,18 +55,18 @@ class TransmitterTile(QFrame):
         self,
         record: TransmitterRecord,
         is_local: bool = False,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self._last_seen: datetime = record.last_seen
         self._audio_enabled: bool = False
         self._is_local: bool = is_local
-        self._transmitting_guest: Optional[TransmitterRecord] = None
+        self._transmitting_guest: TransmitterRecord | None = None
         self._local_tx_active: bool = False
-        self._last_record: Optional[TransmitterRecord] = None
-        self._delete_btn: Optional[QPushButton] = None
-        self._edit_btn: Optional[QPushButton] = None
-        self._clone_btn: Optional[QPushButton] = None
+        self._last_record: TransmitterRecord | None = None
+        self._delete_btn: QPushButton | None = None
+        self._edit_btn: QPushButton | None = None
+        self._clone_btn: QPushButton | None = None
         self._opacity = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self._opacity)
         self._build_ui()
@@ -144,7 +149,8 @@ class TransmitterTile(QFrame):
             lines.append(f"{s}:{a}:{e}  •  Radio {g.radio_id}  •  {state_str}")
         self._guest_label.setToolTip("\n".join(lines))
         self._guest_label.show()
-        # If any guest is transmitting, store it so update_record can re-apply the override
+        # If any guest is transmitting, store it so update_record
+        # can re-apply the override.
         transmitting = [g for g in guests if g.state == TransmitterState.TRANSMITTING]
         self._transmitting_guest = transmitting[0] if transmitting else None
         self._apply_guest_override()
@@ -166,14 +172,16 @@ class TransmitterTile(QFrame):
             label = _STATE_LABELS.get(self._last_record.state, "?")
             self._state_label.setText(label)
             self._state_label.setStyleSheet(
-                f"color: white; background: {color}; border-radius: 4px; padding: 2px 6px;"
+                f"color: white; background: {color}; "
+                "border-radius: 4px; padding: 2px 6px;"
             )
             self._apply_guest_override()
 
     def _apply_local_tx_label(self) -> None:
         self._state_label.setText("TX")
         self._state_label.setStyleSheet(
-            "color: white; background: #E74C3C; border-radius: 4px; padding: 2px 6px;"
+            "color: white; background: #E74C3C; "
+            "border-radius: 4px; padding: 2px 6px;"
         )
 
     def _apply_guest_override(self) -> None:
@@ -184,8 +192,9 @@ class TransmitterTile(QFrame):
         s, a, e = g.entity_id
         self._title_label.setText(f"{s}:{a}:{e}  •  Radio {g.radio_id} [remote]")
         self._state_label.setText("RX")
+        color = _STATE_COLORS[TransmitterState.TRANSMITTING]
         self._state_label.setStyleSheet(
-            f"color: white; background: {_STATE_COLORS[TransmitterState.TRANSMITTING]}; "
+            f"color: white; background: {color}; "
             "border-radius: 4px; padding: 2px 6px;"
         )
 

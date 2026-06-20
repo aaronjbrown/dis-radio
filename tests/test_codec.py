@@ -1,5 +1,6 @@
 import struct
-from dis_radio.audio.codec import decode_ulaw, decode_pcm, decode
+
+from dis_radio.audio.codec import decode, decode_pcm, decode_ulaw
 
 
 def _int16(data: bytes) -> int:

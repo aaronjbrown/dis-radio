@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import numpy as np
 
 # ITU-T G.711 µ-law exponent lookup table
@@ -14,7 +15,8 @@ def _build_ulaw_table() -> np.ndarray:
     magnitude = _EXP_LUT[exp] + (mant << (exp + 3))
     linear = np.where(sign != 0, -magnitude, magnitude)
     # For 0x7F (negative silence), use -1 (mid-rise quantization) to distinguish from
-    # 0xFF (positive silence) and enable lossless roundtrip: decode(0x7F) = -1, encode(-1) = 0x7F
+    # 0xFF (positive silence) and enable lossless roundtrip:
+    #   decode(0x7F) = -1, encode(-1) = 0x7F
     linear = np.where(indices == 0x7F, -1, linear)
     return np.clip(linear, -32768, 32767).astype(np.int16)
 
@@ -45,7 +47,7 @@ def _build_ulaw_encode_table() -> np.ndarray:
 
     mant = ((magnitude >> (exp + 3)) & 0x0F).astype(np.int32)
     ulaw = (~(sign | (exp << 4) | mant)).astype(np.uint8)
-    return ulaw
+    return ulaw  # type: ignore[no-any-return]
 
 
 _ULAW_ENCODE_TABLE: np.ndarray = _build_ulaw_encode_table()
@@ -53,7 +55,8 @@ _ULAW_ENCODE_TABLE: np.ndarray = _build_ulaw_encode_table()
 
 def encode_ulaw(data: bytes) -> bytes:
     """Encode int16 PCM bytes to G.711 µ-law. Input must be little-endian int16."""
-    return _ULAW_ENCODE_TABLE[np.frombuffer(data, dtype=np.int16).view(np.uint16)].tobytes()
+    samples = np.frombuffer(data, dtype=np.int16).view(np.uint16)
+    return _ULAW_ENCODE_TABLE[samples].tobytes()
 
 
 def decode_pcm(data: bytes) -> bytes:

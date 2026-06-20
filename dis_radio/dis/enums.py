@@ -193,7 +193,7 @@ COUNTRY_NAMES: dict[int, str] = {
     166: "Palmyra Atoll (United States)",
     168: "Panama (PAN)",
     169: "Papua New Guinea (PNG)",
-    170: "Paracel Islands (International - Occupied by China, also claimed by Taiwan and Vietnam)",
+    170: "Paracel Islands (International - Occupied by China, also claimed by Taiwan and Vietnam)",  # noqa: E501
     171: "Paraguay (PRY)",
     172: "Peru (PER)",
     173: "Philippines (PHL)",
@@ -222,7 +222,7 @@ COUNTRY_NAMES: dict[int, str] = {
     196: "South Georgia and the South Sandwich Islands (SGS)",
     197: "South Africa (ZAF)",
     198: "Spain (ESP)",
-    199: "Spratly Islands (International - parts occupied and claimed by China,Malaysia, Philippines, Taiwan, Vietnam)",
+    199: "Spratly Islands (International - parts occupied and claimed by China,Malaysia, Philippines, Taiwan, Vietnam)",  # noqa: E501
     200: "Sri Lanka (LKA)",
     201: "Sudan (SDN)",
     202: "Suriname (SUR)",

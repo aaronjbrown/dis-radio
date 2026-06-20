@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+
 import tomlkit
 
 from dis_radio.models import LocalTransmitter
@@ -14,12 +15,12 @@ class NetworkConfig:
     multicast_group: str = "239.255.0.1"
     port: int = 3000
     interface: str = ""
-    exercise_id: Optional[int] = None
+    exercise_id: int | None = None
 
 
 @dataclass
 class AudioConfig:
-    output_device: Optional[str] = None
+    output_device: str | None = None
 
 
 @dataclass
@@ -36,7 +37,7 @@ class TransmitConfig:
     secondary_radio_id: int = 2
     ptt_key_primary: str = "Space"
     ptt_key_secondary: str = ""
-    input_device: Optional[str] = None
+    input_device: str | None = None
     entity_type_domain: int = 0
     entity_type_country: int = 0
     entity_type_category: int = 1
@@ -57,7 +58,9 @@ class AppConfig:
     audio: AudioConfig = field(default_factory=AudioConfig)
     display: DisplayConfig = field(default_factory=DisplayConfig)
     transmit: TransmitConfig = field(default_factory=TransmitConfig)
-    local_transmitters: LocalTransmitterConfig = field(default_factory=LocalTransmitterConfig)
+    local_transmitters: LocalTransmitterConfig = field(
+        default_factory=LocalTransmitterConfig
+    )
 
 
 def load(path: Path = DEFAULT_CONFIG_PATH) -> AppConfig:

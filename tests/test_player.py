@@ -1,6 +1,7 @@
-import queue
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+
 import pytest
+
 from dis_radio.audio.player import AudioPlayer
 
 

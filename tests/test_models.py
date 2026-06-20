@@ -1,5 +1,10 @@
 from datetime import datetime
-from dis_radio.models import LocalTransmitter, TransmitterRecord, TransmitterState, TransmitterKey
+
+from dis_radio.models import (
+    LocalTransmitter,
+    TransmitterRecord,
+    TransmitterState,
+)
 
 
 def _make_record(**kwargs) -> TransmitterRecord:

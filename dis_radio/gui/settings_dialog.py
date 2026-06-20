@@ -1,11 +1,19 @@
 from __future__ import annotations
-from typing import Optional
 
 import sounddevice as sd
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QComboBox, QCompleter, QDialog, QDialogButtonBox, QFormLayout,
-    QGroupBox, QLineEdit, QSpinBox, QTabWidget, QVBoxLayout, QWidget,
+    QComboBox,
+    QCompleter,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
+    QGroupBox,
+    QLineEdit,
+    QSpinBox,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
 )
 
 from dis_radio.config import AppConfig
@@ -17,7 +25,7 @@ _SORTED_COUNTRY_NAMES = sorted(COUNTRY_NAMES.values())
 class SettingsDialog(QDialog):
     config_changed = pyqtSignal(AppConfig)
 
-    def __init__(self, config: AppConfig, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, config: AppConfig, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._config = config
         self.setWindowTitle("Settings")
@@ -199,11 +207,15 @@ class SettingsDialog(QDialog):
             idx = self._input_combo.findData(config.transmit.input_device)
             if idx >= 0:
                 self._input_combo.setCurrentIndex(idx)
-        self._starting_radio_id_spin.setValue(config.local_transmitters.starting_radio_id)
+        self._starting_radio_id_spin.setValue(
+            config.local_transmitters.starting_radio_id
+        )
 
         self._domain_combo.setCurrentIndex(config.transmit.entity_type_domain)
 
-        country_display = COUNTRY_NAMES.get(config.transmit.entity_type_country, "Other")
+        country_display = COUNTRY_NAMES.get(
+            config.transmit.entity_type_country, "Other"
+        )
         idx = self._country_combo.findText(country_display)
         if idx >= 0:
             self._country_combo.setCurrentIndex(idx)
@@ -228,16 +240,22 @@ class SettingsDialog(QDialog):
         self._config.transmit.primary_radio_id = self._primary_radio_spin.value()
         self._config.transmit.secondary_radio_id = self._secondary_radio_spin.value()
         self._config.transmit.ptt_key_primary = self._ptt_primary_edit.text().strip()
-        self._config.transmit.ptt_key_secondary = self._ptt_secondary_edit.text().strip()
+        self._config.transmit.ptt_key_secondary = (
+            self._ptt_secondary_edit.text().strip()
+        )
         self._config.transmit.input_device = self._input_combo.currentData()
-        self._config.local_transmitters.starting_radio_id = self._starting_radio_id_spin.value()
+        self._config.local_transmitters.starting_radio_id = (
+            self._starting_radio_id_spin.value()
+        )
 
         self._config.transmit.entity_type_domain = self._domain_combo.currentIndex()
         self._config.transmit.entity_type_country = COUNTRY_CODES.get(
             self._country_combo.currentText(), 0
         )
         self._config.transmit.entity_type_category = self._et_category_spin.value()
-        self._config.transmit.entity_type_subcategory = self._et_subcategory_spin.value()
+        self._config.transmit.entity_type_subcategory = (
+            self._et_subcategory_spin.value()
+        )
         self._config.transmit.entity_type_specific = self._et_specific_spin.value()
         self._config.transmit.entity_type_extra = self._et_extra_spin.value()
 

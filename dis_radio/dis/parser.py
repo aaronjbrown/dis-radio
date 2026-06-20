@@ -1,11 +1,11 @@
 from __future__ import annotations
+
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Union
 
+from opendis.dis7 import SignalPdu, TransmitterPdu
 from opendis.PduFactory import createPdu
-from opendis.dis7 import TransmitterPdu, SignalPdu
 
 from dis_radio.dis.enums import MAJOR_MOD_NAMES
 from dis_radio.models import TransmitterKey, TransmitterRecord, TransmitterState
@@ -26,10 +26,10 @@ class ParsedKind(Enum):
     SIGNAL = "signal"
 
 
-ParsedPDU = Union[
-    tuple[ParsedKind, TransmitterRecord],
-    tuple[ParsedKind, TransmitterKey, bytes, int, int],
-]
+ParsedPDU = (
+    tuple[ParsedKind, TransmitterRecord]
+    | tuple[ParsedKind, TransmitterKey, bytes, int, int]
+)
 
 
 def parse_pdu(data: bytes) -> ParsedPDU | None:

@@ -1,10 +1,16 @@
 from __future__ import annotations
-from typing import Optional
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
-    QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox,
-    QFormLayout, QHBoxLayout, QLineEdit, QVBoxLayout, QWidget,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QDoubleSpinBox,
+    QFormLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QVBoxLayout,
+    QWidget,
 )
 
 from dis_radio.dis.modulation import PRESETS
@@ -29,14 +35,16 @@ class LocalTransmitterDialog(QDialog):
 
     def __init__(
         self,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
         *,
-        prefill: Optional[TransmitterRecord] = None,
-        edit_target: Optional[LocalTransmitter] = None,
+        prefill: TransmitterRecord | None = None,
+        edit_target: LocalTransmitter | None = None,
     ) -> None:
         super().__init__(parent)
         self._edit_target = edit_target
-        self.setWindowTitle("Local Transmitter" if edit_target is None else "Edit Local Transmitter")
+        self.setWindowTitle(
+            "Local Transmitter" if edit_target is None else "Edit Local Transmitter"
+        )
         self.setMinimumWidth(320)
         self._build_ui()
         if edit_target is not None:
@@ -101,9 +109,9 @@ class LocalTransmitterDialog(QDialog):
         self._bw_spin.setValue(default_bw_hz / 1_000.0)
 
     def _update_ok_button(self) -> None:
-        self._buttons.button(QDialogButtonBox.StandardButton.Ok).setEnabled(
-            bool(self._name_edit.text().strip())
-        )
+        btn = self._buttons.button(QDialogButtonBox.StandardButton.Ok)
+        if btn is not None:
+            btn.setEnabled(bool(self._name_edit.text().strip()))
 
     def _populate_from_record(self, record: TransmitterRecord) -> None:
         unit_label, divisor = _best_unit(record.frequency_hz)

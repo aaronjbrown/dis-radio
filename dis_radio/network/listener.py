@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 import socket
 import struct
@@ -16,7 +17,8 @@ _SOCKET_TIMEOUT = 1.0  # seconds; controls how quickly stop() takes effect
 
 class DISListener(QThread):
     transmitter_updated = pyqtSignal(TransmitterRecord)
-    signal_received = pyqtSignal(object, bytes, int, int)  # key, audio, encoding, sample_rate
+    # Emits: key, audio, encoding, sample_rate
+    signal_received = pyqtSignal(object, bytes, int, int)
 
     def __init__(self, config: AppConfig) -> None:
         super().__init__()
@@ -48,7 +50,7 @@ class DISListener(QThread):
                 try:
                     data, _ = sock.recvfrom(65535)
                     self._handle_packet(data)
-                except socket.timeout:
+                except TimeoutError:
                     continue
         finally:
             sock.close()
@@ -83,11 +85,11 @@ class DISListener(QThread):
             return
         kind = result[0]
         if kind == ParsedKind.TRANSMITTER:
-            _, record = result
+            _, record = result  # type: ignore[misc]
             if self._passes_filter(record.exercise_id):
                 self.transmitter_updated.emit(record)
         elif kind == ParsedKind.SIGNAL:
-            _, key, audio, encoding, sample_rate = result
+            _, key, audio, encoding, sample_rate = result  # type: ignore[misc]
             if encoding != -1:
                 self.signal_received.emit(key, audio, encoding, sample_rate)
 

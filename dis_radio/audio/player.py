@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 import collections
 import logging
-from typing import Optional
+from typing import Any
 
 import sounddevice as sd
 
@@ -22,13 +23,13 @@ _PRE_ROLL_CHUNKS = 5
 
 
 class TransmitterStream:
-    def __init__(self, sample_rate: int, output_device: Optional[str]) -> None:
+    def __init__(self, sample_rate: int, output_device: str | None) -> None:
         self.sample_rate = sample_rate
         # deque gives O(1) popleft and allows in-place head replacement for
         # partial chunks, avoiding the queue.put() tail-append ordering bug.
         self._buf: collections.deque[bytes] = collections.deque()
         self._buffering = True  # True while waiting for the pre-roll to fill
-        self._muted = False     # True during PTT TX — silences output without closing the stream
+        self._muted = False  # silences during PTT TX without closing the stream
         self._stream = sd.RawOutputStream(
             samplerate=sample_rate,
             channels=_STREAM_CHANNELS,
@@ -52,7 +53,7 @@ class TransmitterStream:
         self._stream.stop()
         self._stream.close()
 
-    def _callback(self, outdata, frames, time, status) -> None:  # noqa: ANN001
+    def _callback(self, outdata: Any, frames: int, time: Any, status: Any) -> None:
         if status:
             log.warning("audio output status: %s", status)
         needed = frames * _BYTES_PER_SAMPLE
@@ -93,7 +94,7 @@ class TransmitterStream:
 
 
 class AudioPlayer:
-    def __init__(self, output_device: Optional[str]) -> None:
+    def __init__(self, output_device: str | None) -> None:
         self._output_device = output_device
         self._enabled: set[TransmitterKey] = set()
         self._streams: dict[TransmitterKey, TransmitterStream] = {}

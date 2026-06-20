@@ -1,13 +1,18 @@
 from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import Optional
 
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 
 from dis_radio.config import AppConfig
 from dis_radio.config import save as save_config
-from dis_radio.models import LocalTransmitter, TransmitterKey, TransmitterRecord, TransmitterState
+from dis_radio.models import (
+    LocalTransmitter,
+    TransmitterKey,
+    TransmitterRecord,
+    TransmitterState,
+)
 from dis_radio.network.sender import DISSender
 
 log = logging.getLogger(__name__)
@@ -24,7 +29,7 @@ class LocalTransmitterManager(QObject):
         config: AppConfig,
         sender: DISSender,
         *,
-        parent: Optional[QObject] = None,
+        parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
         self._config = config
@@ -48,7 +53,8 @@ class LocalTransmitterManager(QObject):
         for lt in self._config.local_transmitters.transmitters:
             self.transmitter_updated.emit(self._make_record(lt))
             self._sender.send_transmitter(
-                self._key(lt.radio_id), lt.frequency_hz, TransmitterState.IDLE, exercise_id,
+                self._key(lt.radio_id), lt.frequency_hz,
+                TransmitterState.IDLE, exercise_id,
                 power_dbm=lt.power_dbm, bandwidth_hz=lt.bandwidth_hz,
                 modulation_major=lt.modulation_major,
             )
@@ -58,7 +64,8 @@ class LocalTransmitterManager(QObject):
         self._heartbeat.stop()
 
     def load(self) -> None:
-        """Emit records for all local transmitters without starting the timer or sending DIS PDUs.
+        """Emit records for all local transmitters without starting
+        the timer or sending DIS PDUs.
 
         Call once at startup so tiles appear immediately before the user connects.
         """
@@ -77,7 +84,8 @@ class LocalTransmitterManager(QObject):
         self.transmitter_updated.emit(self._make_record(lt))
         if self._active:
             self._sender.send_transmitter(
-                self._key(lt.radio_id), lt.frequency_hz, TransmitterState.IDLE, self._exercise_id,
+                self._key(lt.radio_id), lt.frequency_hz,
+                TransmitterState.IDLE, self._exercise_id,
                 power_dbm=lt.power_dbm, bandwidth_hz=lt.bandwidth_hz,
                 modulation_major=lt.modulation_major,
             )
@@ -85,11 +93,15 @@ class LocalTransmitterManager(QObject):
     def remove(self, radio_id: int) -> None:
         key = self._key(radio_id)
         self._config.local_transmitters.transmitters = [
-            t for t in self._config.local_transmitters.transmitters if t.radio_id != radio_id
+            t
+            for t in self._config.local_transmitters.transmitters
+            if t.radio_id != radio_id
         ]
         save_config(self._config)
         if self._active:
-            self._sender.send_transmitter(key, 0.0, TransmitterState.OFF, self._exercise_id)
+            self._sender.send_transmitter(
+                key, 0.0, TransmitterState.OFF, self._exercise_id
+            )
         self.transmitter_removed.emit(key)
 
     def update(self, lt: LocalTransmitter) -> None:
@@ -102,7 +114,8 @@ class LocalTransmitterManager(QObject):
         self.transmitter_updated.emit(self._make_record(lt))
         if self._active:
             self._sender.send_transmitter(
-                self._key(lt.radio_id), lt.frequency_hz, TransmitterState.IDLE, self._exercise_id,
+                self._key(lt.radio_id), lt.frequency_hz,
+                TransmitterState.IDLE, self._exercise_id,
                 power_dbm=lt.power_dbm, bandwidth_hz=lt.bandwidth_hz,
                 modulation_major=lt.modulation_major,
             )

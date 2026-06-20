@@ -1,11 +1,11 @@
-from datetime import datetime
 from unittest.mock import MagicMock, patch
+
 import pytest
 from PyQt6.QtWidgets import QApplication
 
 from dis_radio.config import AppConfig, LocalTransmitterConfig
-from dis_radio.models import LocalTransmitter, TransmitterState
 from dis_radio.local_transmitter_manager import LocalTransmitterManager
+from dis_radio.models import LocalTransmitter
 
 
 @pytest.fixture(scope="session")
@@ -13,7 +13,9 @@ def qapp():
     return QApplication.instance() or QApplication([])
 
 
-def _make_lt(name="Test", freq=30_000_000.0, mod="AM (DSB)", power=10.0, radio_id=0, bw=0.0) -> LocalTransmitter:
+def _make_lt(
+    name="Test", freq=30_000_000.0, mod="AM (DSB)", power=10.0, radio_id=0, bw=0.0
+) -> LocalTransmitter:
     return LocalTransmitter(name=name, frequency_hz=freq, modulation_major=mod,
                             power_dbm=power, radio_id=radio_id, bandwidth_hz=bw)
 

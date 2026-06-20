@@ -1,9 +1,10 @@
-import io
 import struct
+
 import pytest
 from PyQt6.QtWidgets import QApplication
+
 from dis_radio.config import AppConfig
-from dis_radio.models import TransmitterRecord, TransmitterState
+from dis_radio.models import TransmitterRecord
 from dis_radio.network.listener import DISListener
 
 

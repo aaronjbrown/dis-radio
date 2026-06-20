@@ -1,7 +1,9 @@
 import struct as _struct
+
 import pytest
+
 from dis_radio.config import AppConfig
-from dis_radio.dis.parser import parse_pdu, ParsedKind
+from dis_radio.dis.parser import ParsedKind, parse_pdu
 from dis_radio.models import TransmitterState
 from dis_radio.network.sender import DISSender
 
@@ -14,7 +16,9 @@ def sender_and_captured(monkeypatch):
     config.network.port = 3000
     sender = DISSender(config)
     captured = []
-    monkeypatch.setattr(sender._sock, "sendto", lambda data, addr: captured.append((data, addr)))
+    monkeypatch.setattr(
+        sender._sock, "sendto", lambda data, addr: captured.append((data, addr))
+    )
     return sender, captured
 
 
@@ -63,7 +67,9 @@ def test_send_transmitter_state_idle(sender_and_captured):
 
 def test_send_transmitter_state_transmitting(sender_and_captured):
     sender, captured = sender_and_captured
-    sender.send_transmitter((1, 1, 1, 1), 100_000_000.0, TransmitterState.TRANSMITTING, 1)
+    sender.send_transmitter(
+        (1, 1, 1, 1), 100_000_000.0, TransmitterState.TRANSMITTING, 1
+    )
     data, _ = captured[0]
     _, record = parse_pdu(data)
     assert record.state == TransmitterState.TRANSMITTING
@@ -138,7 +144,9 @@ def test_reconfigure_updates_target(monkeypatch):
     config = AppConfig()
     sender = DISSender(config)
     captured = []
-    monkeypatch.setattr(sender._sock, "sendto", lambda data, addr: captured.append(addr))
+    monkeypatch.setattr(
+        sender._sock, "sendto", lambda data, addr: captured.append(addr)
+    )
     new_config = AppConfig()
     new_config.network.multicast_group = "239.255.0.2"
     new_config.network.port = 4000
@@ -162,7 +170,7 @@ def test_send_transmitter_modulation_am_dsb(sender_and_captured):
                             modulation_major="AM (DSB)")
     data, _ = captured[0]
     _, record = parse_pdu(data)
-    assert record.modulation_major == "Amplitude"   # SISO UID 155: major=1 → "Amplitude"
+    assert record.modulation_major == "Amplitude"  # SISO UID 155: major=1
 
 
 def test_send_transmitter_power_dbm(sender_and_captured):
